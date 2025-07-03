@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Auth Demo</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #ffeb3b, #03a9f4, #f44336);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #03a9f4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0288d1;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
+        import {
+            getAuth,
+            signInWithPhoneNumber,
+            RecaptchaVerifier,
+            createUserWithEmailAndPassword,
+            sendEmailVerification,
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgcvuDjGdfJu91d4u5_wUXON6xr6isdX4",
+            authDomain: "test-1eee2.firebaseapp.com",
+            projectId: "test-1eee2",
+            storageBucket: "test-1eee2.firebasestorage.app",
+            messagingSenderId: "350812729772",
+            appId: "1:350812729772:web:d3740f434445ed0f718a09",
+            measurementId: "G-F04JCB03HD"
+        };
+        
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+            'size': 'normal',
+            'callback': (response) => {
+                console.log("reCAPTCHA Solved");
+            }
+        }, auth);
+
+        window.sendOTP = () => {
+            const phoneNumber = document.getElementById('phone').value;
+            const appVerifier = window.recaptchaVerifier;
+
+            signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+                .then((confirmationResult) => {
+                    window.confirmationResult = confirmationResult;
+                    alert("OTP Sent to " + phoneNumber);
+                }).catch((error) => {
+                    alert("OTP Error: " + error.message);
+                });
+        };
+
+        window.verifyOTP = () => {
+            const code = document.getElementById('otp').value;
+            window.confirmationResult.confirm(code)
+                .then((result) => {
+                    alert("Phone Number Verified!");
+                }).catch((error) => {
+                    alert("Invalid OTP!");
+                });
+        };
+
+        window.register = () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    sendEmailVerification(userCredential.user).then(() => {
+                        alert("Verification Email Sent to " + email);
+                    });
+                }).catch((error) => {
+                    alert("Registration Error: " + error.message);
+                });
+        };
+
+        window.login = () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    if (userCredential.user.emailVerified) {
+                        document.getElementById("message").innerText = "✅ Login successful!";
+                        window.location.href = "apk-2.html";
+
+                    } else {
+                        alert("Please verify your email before login.");
+                    }
+                }).catch((error) => {
+                    alert("Login Error: " + error.message);
+                });
+        };
+
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h2>📱 Phone Number OTP Verification</h2>
+        <input id="phone" placeholder="+91XXXXXXXXXX" />
+        <div id="recaptcha-container"></div>
+        <button onclick="sendOTP()">Send OTP</button>
+
+        <input id="otp" placeholder="Enter OTP" />
+        <button onclick="verifyOTP()">Verify OTP</button>
+
+        <hr>
+
+        <h2>📧 Email Registration</h2>
+        <input id="email" placeholder="Enter Email" />
+        <input id="password" type="password" placeholder="Enter Password" />
+        <button onclick="register()">Register & Verify Email</button>
+
+        <hr>
+
+        <h2>🔐 Email Login</h2>
+        <input id="loginEmail" placeholder="Email" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+
+        <p id="message"></p>
+    </div>
+</body>
+
+</html>
